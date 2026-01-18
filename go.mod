@@ -1,4 +1,4 @@
-module github.com/XIU2/CloudflareSpeedTest
+module CloudflareSpeedTest
 
 go 1.18
 
@@ -9,9 +9,12 @@ require (
 )
 
 require (
+	github.com/RoaringBitmap/roaring v1.9.4 // indirect
+	github.com/bits-and-blooms/bitset v1.12.0 // indirect
 	github.com/mattn/go-colorable v0.1.14 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/mattn/go-runewidth v0.0.16 // indirect
+	github.com/mschoch/smat v0.2.0 // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
 	golang.org/x/sys v0.30.0 // indirect
 )

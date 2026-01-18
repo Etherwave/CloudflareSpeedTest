@@ -1,4 +1,8 @@
 dist
 Releases
-*.exe
 *.csv
+CloudflareSpeedTest.exe
+CloudflareSpeedTest
+config.json
+.vscode
+*.rb
