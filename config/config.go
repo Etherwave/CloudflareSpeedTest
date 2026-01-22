@@ -221,12 +221,13 @@ func doInit() error {
 		return err
 	}
 	var configFilePath = flag.String("config", "config.json", "path to config file")
+	var testIPNum = flag.Int("n", -1, "number of IPs to test")
 	flag.Parse()
 
 	fmt.Println("config:", *configFilePath)
 	err = loadConfigJson(*configFilePath)
-	if err != nil {
-		return err
+	if *testIPNum != -1 {
+		Config.TestIPNum = *testIPNum
 	}
 	return err
 }
