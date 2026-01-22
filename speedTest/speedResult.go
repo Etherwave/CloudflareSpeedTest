@@ -9,6 +9,7 @@ import (
 	"sort"
 	"strconv"
 	"time"
+	"unsafe"
 )
 
 // 判断文件是否存在
@@ -88,6 +89,16 @@ func (s *SpeedResult) fromStringSlice(data []string) error {
 	s.Colo = data[6]
 	return nil
 }
+
+func (s *SpeedResult) less(other *SpeedResult) bool {
+	return uintptr(unsafe.Pointer(s)) < uintptr(unsafe.Pointer(other))
+}
+
+type SpeedResultSet map[string]*SpeedResult
+
+func (ss *SpeedResultSet) Add(s *SpeedResult)         { (*ss)[s.IP.String()] = s }
+func (ss *SpeedResultSet) Get(ip string) *SpeedResult { return (*ss)[ip] }
+func (ss *SpeedResultSet) Contains(ip string) bool    { return (*ss)[ip] != nil }
 
 type SpeedResultSlice []SpeedResult
 
@@ -185,6 +196,15 @@ func (s *SpeedResultSlice) LoadSpeedResultSlice(inputFile string) error {
 // 		return (*s)[i].DownloadSpeed < (*s)[j].DownloadSpeed
 // 	})
 // }
+
+func (s *SpeedResultSlice) SortByDelayLossRate() {
+	sort.Slice(*s, func(i, j int) bool {
+		if (*s)[i].Delay == (*s)[j].Delay {
+			return (*s)[i].getLossRate() < (*s)[j].getLossRate()
+		}
+		return (*s)[i].Delay < (*s)[j].Delay
+	})
+}
 
 func (s *SpeedResultSlice) SortByDownloadSpeedDelayLossRate() {
 	sort.Slice(*s, func(i, j int) bool {

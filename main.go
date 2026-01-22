@@ -37,7 +37,20 @@ func SpeedTest() (s *speedTest.SpeedResultSlice) {
 			config.Config.HttpTCPPort,
 		)
 	}
-	s.SortByDownloadSpeedDelayLossRate()
+	// update ip download speed by last result
+	lastSpeedResultSlice := speedTest.NewSpeedResultSlice(nil)
+	lastSpeedResultSlice.LoadSpeedResultSlice(config.Config.OutputFile)
+	ss := speedTest.SpeedResultSet{}
+	for i := 0; i < len(*lastSpeedResultSlice); i++ {
+		ss.Add(&(*lastSpeedResultSlice)[i])
+	}
+	for i := 0; i < len(*s); i++ {
+		ssIp := ss.Get((*s)[i].IP.String())
+		if ssIp != nil {
+			(*s)[i].DownloadSpeed = ssIp.DownloadSpeed
+		}
+	}
+	s.SortByDelayLossRate()
 	// 开始下载测速
 	if config.Config.EnableDownLoadTest {
 		fmt.Printf("Start DownloadTest %s\n", config.Config.DownloadURL)

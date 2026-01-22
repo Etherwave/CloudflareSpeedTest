@@ -19,8 +19,9 @@ func LoadResultIPV4(resultIPV4File string) *[]uint32 {
 		return &bestIPV4
 	}
 	lines := strings.Split(string(data), "\n")
-	for _, line := range lines {
-		line = strings.TrimSpace(line)
+	// skip header
+	for i := 1; i < len(lines); i++ {
+		line := strings.TrimSpace(lines[i])
 		if line == "" || strings.HasPrefix(line, "#") {
 			continue
 		}
