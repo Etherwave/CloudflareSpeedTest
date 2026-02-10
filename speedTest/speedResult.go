@@ -145,6 +145,10 @@ func (s *SpeedResultSlice) SaveSpeedResultSlice(outputFile string, num int) {
 	if len(*s) == 0 {
 		return
 	}
+	backupFile := time.Now().Format("2006-01-02") + "_" + outputFile
+	if _, err := os.Stat(outputFile); !os.IsNotExist(err) {
+		os.Rename(outputFile, backupFile)
+	}
 	fp, err := os.Create(outputFile)
 	if err != nil {
 		fmt.Printf("创建文件[%s]失败：%v", outputFile, err)
