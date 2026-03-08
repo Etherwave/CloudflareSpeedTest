@@ -141,13 +141,18 @@ func (s *SpeedResultSlice) fromStringSlice(data [][]string) error {
 	return nil
 }
 
+func CopyFileSmall(src, dst string) error {
+	data, err := os.ReadFile(src)
+	if err != nil {
+		return err
+	}
+	// 第二个参数为文件权限（通常使用 0644）
+	return os.WriteFile(dst, data, 0644)
+}
+
 func (s *SpeedResultSlice) SaveSpeedResultSlice(outputFile string, num int) {
 	if len(*s) == 0 {
 		return
-	}
-	backupFile := time.Now().Format("2006-01-02") + "_" + outputFile
-	if _, err := os.Stat(outputFile); !os.IsNotExist(err) {
-		os.Rename(outputFile, backupFile)
 	}
 	fp, err := os.Create(outputFile)
 	if err != nil {
@@ -168,6 +173,13 @@ func (s *SpeedResultSlice) SaveSpeedResultSlice(outputFile string, num int) {
 	w := csv.NewWriter(fp) //创建一个新的写入文件流
 	_ = w.WriteAll(lines)
 	w.Flush()
+	// copy file to file with date
+	outputFileWithDate := time.Now().Format("2006-01-02") + "_" + outputFile
+	err = CopyFileSmall(outputFile, outputFileWithDate)
+	if err != nil {
+		fmt.Printf("复制文件[%s]失败：%v", outputFile, err)
+		return
+	}
 }
 
 func (s *SpeedResultSlice) LoadSpeedResultSlice(inputFile string) error {
