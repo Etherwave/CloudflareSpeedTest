@@ -30,8 +30,9 @@ var (
 	configInitOnce sync.Once
 	initErr        error
 
-	Config ConfigJson
-	Rand   *rand.Rand
+	Config     ConfigJson
+	Rand       *rand.Rand
+	ShowStatus bool
 )
 
 type StrSet map[string]struct{}
@@ -222,6 +223,7 @@ func doInit() error {
 	}
 	var configFilePath = flag.String("config", "config.json", "path to config file")
 	var testIPNum = flag.Int("n", -1, "number of IPs to test")
+	var showStatus = flag.Bool("s", false, "show status")
 	flag.Parse()
 
 	fmt.Println("config:", *configFilePath)
@@ -229,5 +231,6 @@ func doInit() error {
 	if *testIPNum != -1 {
 		Config.TestIPNum = *testIPNum
 	}
+	ShowStatus = *showStatus
 	return err
 }

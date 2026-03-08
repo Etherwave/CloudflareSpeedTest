@@ -253,3 +253,16 @@ func (s *SpeedResultSlice) Print(num int) {
 		fmt.Printf(dataFormat, dateString[i][0], dateString[i][1], dateString[i][2], dateString[i][3], dateString[i][4], dateString[i][5], dateString[i][6])
 	}
 }
+
+func ShowResultStatus(resultFile string) {
+	speedResultSlice := SpeedResultSlice(nil)
+	speedResultSlice.LoadSpeedResultSlice(resultFile)
+	vaildIpNum := 0
+	for i := 0; i < len(speedResultSlice); i++ {
+		if (speedResultSlice)[i].DownloadSpeed > 0 {
+			vaildIpNum++
+		}
+	}
+	fmt.Printf("vaildIpNum: %d\n", vaildIpNum)
+	fmt.Printf("totalIpNum: %d\n", len(speedResultSlice))
+}

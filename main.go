@@ -105,6 +105,15 @@ func main() {
 		fmt.Println(err)
 		return
 	}
+	if config.ShowStatus {
+		speedTest.ShowResultStatus(config.Config.OutputFile)
+		utils.ShowIPStatus(
+			config.Config.CIDRIPV4File,
+			config.Config.AllowIPV4RBFile,
+			config.Config.DenyIPV4RBFile,
+		)
+		return
+	}
 	s := SpeedTest() // 获取下载测速结果
 	fmt.Println("SpeedTest Done")
 	// s.Print(config.Config.TestIPNum)

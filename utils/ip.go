@@ -166,9 +166,9 @@ func getIPsByCIDRs(
 	var ipsRB roaring.Bitmap
 	// get ip from unvisited ip and allow ip
 	testAllowIPV4Num := uint32(float32(want) * config.TestAllowIPV4NumRatio)
-	testAllowUPV4PerCIDRNum := int(float32(testAllowIPV4Num) / float32((len(cidrs))))
-	if testAllowUPV4PerCIDRNum == 0 {
-		testAllowUPV4PerCIDRNum = 1
+	testAllowIPV4PerCIDRNum := int(float32(testAllowIPV4Num) / float32((len(cidrs))))
+	if testAllowIPV4PerCIDRNum == 0 {
+		testAllowIPV4PerCIDRNum = 1
 	}
 	for _, cidr := range cidrs {
 		// fmt.Printf("get ip from cidr: %s\n", cidr)
@@ -198,11 +198,11 @@ func getIPsByCIDRs(
 			ips = append(ips, Uint32toNetIPAddrIPV4(i))
 			want--
 		}
-		// random choose testAllowUPV4PerCIDRNum ip from base to lastVisited
+		// random choose testAllowIPV4PerCIDRNum ip from base to lastVisited
 		config.Rand.Shuffle(len(cidrAllowIPV4), func(i, j int) {
 			cidrAllowIPV4[i], cidrAllowIPV4[j] = cidrAllowIPV4[j], cidrAllowIPV4[i]
 		})
-		for i := 0; i < testAllowUPV4PerCIDRNum && i < len(cidrAllowIPV4); i++ {
+		for i := 0; i < testAllowIPV4PerCIDRNum && i < len(cidrAllowIPV4); i++ {
 			ipsRB.Add(cidrAllowIPV4[i])
 			ips = append(ips, Uint32toNetIPAddrIPV4(cidrAllowIPV4[i]))
 		}
@@ -235,4 +235,37 @@ func GetIPs(
 		return nil
 	}
 	return ips
+}
+
+func getIPsNumByCIDRs(cidrs []string) (int, error) {
+	var totalIpsNum int
+	for _, cidr := range cidrs {
+		// fmt.Printf("get ip from cidr: %s\n", cidr)
+		_, ipnet, err := net.ParseCIDR(cidr)
+		if err != nil {
+			return 0, err
+		}
+		// 只支持 IPv4
+		ones, bits := ipnet.Mask.Size()
+		if bits != 32 {
+			return 0, fmt.Errorf("only ipv4 supported")
+		}
+		total := 1 << (bits - ones) // 2^(32-ones)
+		totalIpsNum += total
+	}
+	return totalIpsNum, nil
+}
+
+func ShowIPStatus(
+	cidrFile string,
+	allowIPV4RBFile string,
+	denyIPV4RBFile string) {
+	cidrs, _ := loadCIDRTextSlice(cidrFile)
+	totalIpsNum, _ := getIPsNumByCIDRs(cidrs)
+	allowIPV4RB := loadIPV4RB(allowIPV4RBFile)
+	denyIPV4RB := loadIPV4RB(denyIPV4RBFile)
+
+	fmt.Printf("total ipv4 num: %d\n", totalIpsNum)
+	fmt.Printf("allow ipv4 num: %d\n", allowIPV4RB.GetCardinality())
+	fmt.Printf("deny ipv4 num: %d\n", denyIPV4RB.GetCardinality())
 }
