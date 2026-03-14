@@ -114,6 +114,21 @@ func main() {
 		)
 		return
 	}
+	if config.UpdateIPByIndex > -1 {
+		lastSpeedResultSlice := speedTest.NewSpeedResultSlice(nil)
+		lastSpeedResultSlice.LoadSpeedResultSlice(config.Config.OutputFile)
+		if config.UpdateIPByIndex > len(*lastSpeedResultSlice) {
+			fmt.Printf("UpdateIPByIndex %d > len(%d)\n", config.UpdateIPByIndex, len(*lastSpeedResultSlice))
+			return
+		}
+		indexIp := (*lastSpeedResultSlice)[config.UpdateIPByIndex].IP.String()
+		err := utils.UpdateHosts(indexIp, config.Config.WebHosts) // 更新hosts文件
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+		return
+	}
 	s := SpeedTest() // 获取下载测速结果
 	fmt.Println("SpeedTest Done")
 	// s.Print(config.Config.TestIPNum)
