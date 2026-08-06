@@ -6,3 +6,4 @@ CloudflareSpeedTest
 config.json
 .vscode
 *.rb
+*.log

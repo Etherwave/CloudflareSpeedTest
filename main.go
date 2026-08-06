@@ -10,7 +10,7 @@ import (
 func SpeedTest() (s *speedTest.SpeedResultSlice) {
 	ips := utils.GetIPs(
 		config.Config.CIDRIPV4File,
-		config.Config.TestIPNum,
+		uint32(config.Config.TestIPNum),
 		config.Config.OutputFile,
 		config.Config.AllowIPV4RBFile,
 		config.Config.DenyIPV4RBFile,
@@ -129,6 +129,15 @@ func main() {
 		}
 		return
 	}
+
+	// 初始化日志
+	if err := utils.InitLog(config.Config.LogFile); err != nil {
+		panic("初始化日志失败: " + err.Error())
+	}
+
+	// 使用日志
+	utils.LogInfo("程序启动")
+
 	s := SpeedTest() // 获取下载测速结果
 	fmt.Println("SpeedTest Done")
 	// s.Print(config.Config.TestIPNum)

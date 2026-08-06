@@ -13,15 +13,14 @@ import (
 )
 
 const (
-	Version               = "1.0.0"
-	WindowsHostsFilePath  = "C:\\Windows\\System32\\drivers\\etc\\hosts"
-	LinuxHostsFilePath    = "/etc/hosts"
-	ConfigFilePath        = "config.json"
-	Debug                 = false
-	MaxAllowDelay         = time.Duration(300 * time.Millisecond)
-	MaxDelay              = time.Duration(9999 * time.Millisecond)
-	MaxLossRate           = 1.0 // 100%
-	TestAllowIPV4NumRatio = 0.1
+	Version                   = "1.0.0"
+	WindowsHostsFilePath      = "C:\\Windows\\System32\\drivers\\etc\\hosts"
+	LinuxHostsFilePath        = "/etc/hosts"
+	ConfigFilePath            = "config.json"
+	MaxAllowDelay             = time.Duration(300 * time.Millisecond)
+	MaxDelay                  = time.Duration(9999 * time.Millisecond)
+	MaxLossRate               = 1.0 // 100%
+	TestUnvisitedIPV4NumRatio = 0.9
 )
 
 var (
@@ -34,6 +33,7 @@ var (
 	Rand            *rand.Rand
 	ShowStatus      bool
 	UpdateIPByIndex int
+	Debug           bool
 )
 
 type StrSet map[string]struct{}
@@ -67,6 +67,7 @@ func (s *StrSet) UnmarshalJSON(data []byte) error {
 type ConfigJson struct {
 	// base config
 	OutputFile         string   `json:"OutputFile"`
+	LogFile            string   `json:"LogFile"`
 	TestMode           string   `json:"TestMode"`
 	EnableDownLoadTest bool     `json:"EnableDownLoadTest"`
 	FastTest           bool     `json:"FastTest"`
@@ -103,6 +104,7 @@ type ConfigJson struct {
 func NewConfigJson() *ConfigJson {
 	return &ConfigJson{
 		OutputFile:          "results.csv",
+		LogFile:             "speedtest.log",
 		TestMode:            "tcp", // tcp or http
 		EnableDownLoadTest:  true,
 		FastTest:            false,
@@ -226,6 +228,7 @@ func doInit() error {
 	var testIPNum = flag.Int("n", -1, "number of IPs to test")
 	var showStatus = flag.Bool("s", false, "show status")
 	var updateIPByIndex = flag.Int("u", -1, "update IP by result with index")
+	var debug = flag.Bool("d", false, "enable debug mode")
 	flag.Parse()
 	fmt.Println("config:", *configFilePath)
 	err = loadConfigJson(*configFilePath)
@@ -233,6 +236,7 @@ func doInit() error {
 		Config.TestIPNum = *testIPNum
 	}
 	ShowStatus = *showStatus
+	Debug = *debug
 	UpdateIPByIndex = *updateIPByIndex
 	return err
 }

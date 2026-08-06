@@ -156,22 +156,47 @@ func loadCIDRTextSlice(file string) ([]string, error) {
 	return cidrs, nil
 }
 
+// SelectRandomIPs 从 Bitmap 中随机选择 n 个不重复的 IP (uint32)
+func SelectRandomIPs(bm *roaring.Bitmap, n uint32) []uint32 {
+	if bm.GetCardinality() == 0 || n <= 0 {
+		return nil
+	}
+
+	// 1. 将 Bitmap 全部导出为 []uint32 (这一步非常快)
+	allIPs := bm.ToArray()
+
+	// 如果 n 大于总数量，返回全部并打乱，或者返回全部
+	if n >= uint32(len(allIPs)) {
+		// 打乱后返回全部
+		config.Rand.Shuffle(len(allIPs), func(i, j int) { allIPs[i], allIPs[j] = allIPs[j], allIPs[i] })
+		return allIPs
+	}
+
+	// 2. 随机采样：使用 Fisher-Yates 算法只打乱前 n 个位置
+	for i := 0; i < int(n); i++ {
+		// 在 [i, len-1] 范围内随机选一个下标
+		j := config.Rand.IntN(len(allIPs)-i) + i
+		allIPs[i], allIPs[j] = allIPs[j], allIPs[i]
+	}
+
+	// 返回前 n 个
+	return allIPs[:n]
+}
+
 func getIPsByCIDRs(
 	cidrs []string,
-	want int,
+	want uint32,
 	bestIPV4 *[]uint32,
 	allowIPV4RB *roaring.Bitmap,
 	denyIPV4RB *roaring.Bitmap) ([]*net.IPAddr, error) {
 	var ips []*net.IPAddr
 	var ipsRB roaring.Bitmap
 	// get ip from unvisited ip and allow ip
-	testAllowIPV4Num := uint32(float32(want) * config.TestAllowIPV4NumRatio)
-	testAllowIPV4PerCIDRNum := int(float32(testAllowIPV4Num) / float32((len(cidrs))))
-	if testAllowIPV4PerCIDRNum == 0 {
-		testAllowIPV4PerCIDRNum = 1
-	}
+	testUnvisitedIPV4Num := uint32(float32(want) * config.TestUnvisitedIPV4NumRatio)
+	LogInfo("testUnvisitedIPV4Num: %d", testUnvisitedIPV4Num)
+	var collectIPCnt uint32 = 0
 	for _, cidr := range cidrs {
-		// fmt.Printf("get ip from cidr: %s\n", cidr)
+		LogInfo("get ip from cidr: %s", cidr)
 		ip, ipnet, err := net.ParseCIDR(cidr)
 		if err != nil {
 			return nil, err
@@ -186,26 +211,32 @@ func getIPsByCIDRs(
 		// 基础地址转 uint32
 		base := NetIPIPV4toUint32(&ip)
 		end := base + uint32(total)
-		cidrAllowIPV4 := make([]uint32, 0)
-		for i := base; i < end && want > 0; i++ {
+		for i := base; i < end; i++ {
 			if denyIPV4RB.Contains(i) {
 				continue
 			}
 			if allowIPV4RB.Contains(i) {
-				cidrAllowIPV4 = append(cidrAllowIPV4, i)
+				continue
 			}
 			ipsRB.Add(i)
 			ips = append(ips, Uint32toNetIPAddrIPV4(i))
-			want--
+			collectIPCnt++
+			if collectIPCnt >= testUnvisitedIPV4Num {
+				break
+			}
 		}
-		// random choose testAllowIPV4PerCIDRNum ip from base to lastVisited
-		config.Rand.Shuffle(len(cidrAllowIPV4), func(i, j int) {
-			cidrAllowIPV4[i], cidrAllowIPV4[j] = cidrAllowIPV4[j], cidrAllowIPV4[i]
-		})
-		for i := 0; i < testAllowIPV4PerCIDRNum && i < len(cidrAllowIPV4); i++ {
-			ipsRB.Add(cidrAllowIPV4[i])
-			ips = append(ips, Uint32toNetIPAddrIPV4(cidrAllowIPV4[i]))
+		if collectIPCnt >= testUnvisitedIPV4Num {
+			break
 		}
+	}
+	// get ip from allowed ip
+	testAllowIPV4Num := want - collectIPCnt
+	LogInfo("testAllowIPV4Num: %d", testAllowIPV4Num)
+	allowedIps := SelectRandomIPs(allowIPV4RB, testAllowIPV4Num)
+	LogInfo("allowedIps size: %v", len(allowedIps))
+	for _, ip := range allowedIps {
+		ipsRB.Add(ip)
+		ips = append(ips, Uint32toNetIPAddrIPV4(ip))
 	}
 	// get ip from result ip
 	for _, ip := range *bestIPV4 {
@@ -214,12 +245,13 @@ func getIPsByCIDRs(
 		}
 		ips = append(ips, Uint32toNetIPAddrIPV4(ip))
 	}
+	LogInfo("ips size: %v", len(ips))
 	return ips, nil
 }
 
 func GetIPs(
 	cidrFile string,
-	want int,
+	want uint32,
 	lastOutputFile string,
 	allowIPV4RBFile string,
 	denyIPV4RBFile string) []*net.IPAddr {
@@ -228,8 +260,11 @@ func GetIPs(
 		return nil
 	}
 	resultIPV4 := LoadResultIPV4(lastOutputFile)
+	LogInfo("resultIPV4 size: %v", len(*resultIPV4))
 	allowIPV4RB := loadIPV4RB(allowIPV4RBFile)
+	LogInfo("allowIPV4RB size: %v", allowIPV4RB.GetCardinality())
 	denyIPV4RB := loadIPV4RB(denyIPV4RBFile)
+	LogInfo("denyIPV4RB size: %v", denyIPV4RB.GetCardinality())
 	ips, err := getIPsByCIDRs(cidrs, want, resultIPV4, allowIPV4RB, denyIPV4RB)
 	if err != nil {
 		return nil
