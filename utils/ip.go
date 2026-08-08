@@ -105,9 +105,15 @@ func SaveBestAllowDenyIPV4(
 	denyIPV4RB := loadIPV4RB(denyIPV4RBFile)
 	for _, ip := range *allowIPV4 {
 		allowIPV4RB.Add(ip)
+		if denyIPV4RB.Contains(ip) {
+			denyIPV4RB.Remove(ip)
+		}
 	}
 	for _, ip := range *denyIPV4 {
 		denyIPV4RB.Add(ip)
+		if allowIPV4RB.Contains(ip) {
+			allowIPV4RB.Remove(ip)
+		}
 	}
 	err := saveIPV4RB(allowIPV4RB, allowIPV4RBFile)
 	if err != nil {
