@@ -10,7 +10,6 @@ func (s *SpeedResult) SpeedTest(
 	tcpPort int,
 	tcpConnectTimes int,
 	tcpConnectTimeout time.Duration,
-	downloadTestIPNum int,
 	downloadIPTestTimes int,
 	downloadTimeout time.Duration,
 	downloadURL string,
@@ -32,7 +31,6 @@ func (s *SpeedResultSlice) SpeedTest(
 	tcpPort int,
 	tcpConnectTimes int,
 	tcpConnectTimeout time.Duration,
-	downloadTestIPNum int,
 	downloadIPTestTimes int,
 	downloadTimeout time.Duration,
 	downloadURL string,
@@ -46,11 +44,13 @@ func (s *SpeedResultSlice) SpeedTest(
 			if sc.Stopped() {
 				return
 			}
-			sr.SpeedTest(tcpPort, tcpConnectTimes, tcpConnectTimeout, downloadTestIPNum, downloadIPTestTimes, downloadTimeout, downloadURL, downloadTCPPort, bar)
+			sr.SpeedTest(tcpPort, tcpConnectTimes, tcpConnectTimeout, downloadIPTestTimes, downloadTimeout, downloadURL, downloadTCPPort, bar)
 			if sr.DownloadSpeed > 0 {
-				sc.Inc()
+				if sr.DownloadSpeed > 1024*1024 {
+					sc.Inc()
+				}
 				if config.Debug {
-					utils.Green.Printf("[调试] IP: %s, 下载速度: %.2f MB/s, 延迟: %s, 丢包率: %.2f%%\n", sr.IP.String(), sr.DownloadSpeed, sr.Delay, sr.getLossRate())
+					utils.Green.Printf("[调试] IP: %s, 下载速度: %.2f MB/s, 延迟: %s, 丢包率: %.2f%%\n", sr.IP.String(), sr.DownloadSpeed/1024/1024, sr.Delay, sr.getLossRate())
 				}
 			}
 		})

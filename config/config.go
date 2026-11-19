@@ -94,7 +94,6 @@ type ConfigJson struct {
 	HttpURL            string        `json:"HttpURL"`
 	HttpTCPPort        int           `json:"HttpTCPPort"`
 	// download config
-	DownloadTestIPNum   int           `json:"DownloadTestIPNum"`
 	DownloadIPTestTimes int           `json:"DownloadIPTestTimes"`
 	DownloadTimeout     time.Duration `json:"DownloadTimeout"`
 	DownloadURL         string        `json:"DownloadURL"`
@@ -125,7 +124,6 @@ func NewConfigJson() *ConfigJson {
 		HttpConnectTimeout:  5 * time.Second,
 		HttpRoutines:        10,
 		HttpStatusCode:      200,
-		DownloadTestIPNum:   10,
 		DownloadIPTestTimes: 1,
 		DownloadTimeout:     3 * time.Second,
 		DownloadURL:         "",

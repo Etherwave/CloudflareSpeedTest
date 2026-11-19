@@ -24,7 +24,6 @@ func SpeedTest() (s *speedTest.SpeedResultSlice) {
 		config.Config.TcpPort,
 		config.Config.TcpConnectTimes,
 		config.Config.TcpConnectTimeout,
-		config.Config.DownloadTestIPNum,
 		config.Config.DownloadIPTestTimes,
 		config.Config.DownloadTimeout,
 		config.Config.DownloadURL,
