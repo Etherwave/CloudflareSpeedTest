@@ -121,7 +121,9 @@ func (s *SpeedResult) DownloadTest(
 	downloadURL string,
 	downloadTCPPort int,
 	bar *utils.Bar) {
-	defer bar.Grow(1, "")
+	if bar != nil {
+		defer bar.Grow(1, "")
+	}
 	s.DownloadSpeed = 0
 	var totalSpeed float64 = 0
 	for i := 0; i < downloadTestTimes; i++ {

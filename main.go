@@ -15,53 +15,36 @@ func SpeedTest() (s *speedTest.SpeedResultSlice) {
 		config.Config.AllowIPV4RBFile,
 		config.Config.DenyIPV4RBFile,
 	)
+	fmt.Printf("ips len %d\n", len(ips))
 	s = speedTest.NewSpeedResultSlice(ips)
+	fmt.Printf("SpeedResultSlice len %d\n", len(*s))
 	fmt.Printf("TestMode %s\n", config.Config.TestMode)
-	switch config.Config.TestMode {
-	case "tcp":
-		s.TcpTest(
-			config.Config.TcpRoutines,
-			config.Config.TcpPort,
-			config.Config.TcpConnectTimes,
-			config.Config.TcpConnectTimeout,
-		)
-	case "http":
-		s.HttpTest(
-			config.Config.HttpColo,
-			config.Config.HttpColoSet,
-			config.Config.HttpConnectTimes,
-			config.Config.HttpConnectTimeout,
-			config.Config.HttpRoutines,
-			config.Config.HttpStatusCode,
-			config.Config.HttpURL,
-			config.Config.HttpTCPPort,
-		)
-	}
-	// update ip download speed by last result
-	lastSpeedResultSlice := speedTest.NewSpeedResultSlice(nil)
-	lastSpeedResultSlice.LoadSpeedResultSlice(config.Config.OutputFile)
-	ss := speedTest.SpeedResultSet{}
-	for i := 0; i < len(*lastSpeedResultSlice); i++ {
-		ss.Add(&(*lastSpeedResultSlice)[i])
-	}
-	for i := 0; i < len(*s); i++ {
-		ssIp := ss.Get((*s)[i].IP.String())
-		if ssIp != nil {
-			(*s)[i].DownloadSpeed = ssIp.DownloadSpeed
-		}
-	}
-	s.SortByDelayLossRate()
-	// 开始下载测速
-	if config.Config.EnableDownLoadTest {
-		fmt.Printf("Start DownloadTest %s\n", config.Config.DownloadURL)
-		s.DownloadTest(
-			config.Config.DownloadTestIPNum,
-			config.Config.DownloadIPTestTimes,
-			config.Config.DownloadTimeout,
-			config.Config.DownloadURL,
-			config.Config.DownloadTCPPort,
-		)
-	}
+	fmt.Printf("Start SpeedTest (TCP -> Download) %s\n", config.Config.DownloadURL)
+	s.SpeedTest(3,
+		config.Config.TcpPort,
+		config.Config.TcpConnectTimes,
+		config.Config.TcpConnectTimeout,
+		config.Config.DownloadTestIPNum,
+		config.Config.DownloadIPTestTimes,
+		config.Config.DownloadTimeout,
+		config.Config.DownloadURL,
+		config.Config.DownloadTCPPort)
+
+	// // update ip download speed by last result
+	// lastSpeedResultSlice := speedTest.NewSpeedResultSlice(nil)
+	// lastSpeedResultSlice.LoadSpeedResultSlice(config.Config.OutputFile)
+	// ss := speedTest.SpeedResultSet{}
+	// for i := 0; i < len(*lastSpeedResultSlice); i++ {
+	// 	ss.Add(&(*lastSpeedResultSlice)[i])
+	// }
+	// for i := 0; i < len(*s); i++ {
+	// 	ssIp := ss.Get((*s)[i].IP.String())
+	// 	if ssIp != nil {
+	// 		(*s)[i].DownloadSpeed = ssIp.DownloadSpeed
+	// 	}
+	// }
+	// s.SortByDelayLossRate()
+
 	s.SortByDownloadSpeedDelayLossRate()
 	return s
 }

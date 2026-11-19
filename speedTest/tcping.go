@@ -13,7 +13,9 @@ func (s *SpeedResult) TcpTest(
 	tcpConnectTimes int,
 	tcpConnectTimeout time.Duration,
 	bar *utils.Bar) {
-	defer bar.Grow(1, "")
+	if bar != nil {
+		defer bar.Grow(1, "")
+	}
 	s.Sended = tcpConnectTimes
 	s.Received = 0
 	s.Delay = config.MaxDelay
